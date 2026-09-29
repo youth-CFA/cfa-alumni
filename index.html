@@ -44,7 +44,7 @@
       background: #ffffff;
       border-radius: 18px;
       padding: 24px 20px;
-      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 3px 15px rgba(0,0,0,0.06);
     }
 
     h1 {
@@ -187,6 +187,7 @@
   </style>
 </head>
 
+
 <body>
 
 <div class="container">
@@ -220,9 +221,13 @@
 
     <div id="formArea">
 
+
       <div class="profile">
 
-        <img id="profileImage">
+        <img
+          id="profileImage"
+          alt="LINEプロフィール画像"
+        >
 
         <div>
 
@@ -376,6 +381,7 @@
           登録する
         </button>
 
+
       </form>
 
     </div>
@@ -383,6 +389,17 @@
   </div>
 
 </div>
+
+
+<!--
+GASへのPOST送信用
+画面遷移を発生させないための隠しiframe
+-->
+<iframe
+  name="gasHiddenFrame"
+  id="gasHiddenFrame"
+  style="display:none;"
+></iframe>
 
 
 <script>
@@ -408,7 +425,9 @@
   */
 
   let lineDisplayName = '';
+
   let linePictureUrl = '';
+
   let idToken = '';
 
 
@@ -428,11 +447,19 @@
 
     try {
 
+      /*
+      LIFF初期化
+      */
+
       await liff.init({
         liffId: LIFF_ID,
         withLoginOnExternalBrowser: true
       });
 
+
+      /*
+      未ログインの場合
+      */
 
       if (!liff.isLoggedIn()) {
 
@@ -448,6 +475,10 @@
       }
 
 
+      /*
+      LINEプロフィール取得
+      */
+
       const profile =
         await liff.getProfile();
 
@@ -459,6 +490,10 @@
         profile.pictureUrl || '';
 
 
+      /*
+      IDトークン取得
+      */
+
       idToken =
         liff.getIDToken() || '';
 
@@ -466,11 +501,15 @@
       if (!idToken) {
 
         throw new Error(
-          'LINEの認証情報を取得できませんでした。'
+          'LINE認証情報を取得できませんでした。'
         );
 
       }
 
+
+      /*
+      LINE名表示
+      */
 
       document.getElementById(
         'profileName'
@@ -478,21 +517,29 @@
         lineDisplayName || 'LINEユーザー';
 
 
+      /*
+      LINE画像表示
+      */
+
       if (linePictureUrl) {
 
-        const img =
+        const image =
           document.getElementById(
             'profileImage'
           );
 
-        img.src =
+        image.src =
           linePictureUrl;
 
-        img.style.display =
+        image.style.display =
           'block';
 
       }
 
+
+      /*
+      既存情報読み込み
+      */
 
       document.getElementById(
         'status'
@@ -507,10 +554,12 @@
 
       console.error(error);
 
+
       document.getElementById(
         'status'
       ).style.display =
         'none';
+
 
       showError(
         'LINEとの接続に失敗しました。\n\n' +
@@ -533,12 +582,9 @@
     window.receiveAlumniData =
       function(result) {
 
-        const status =
-          document.getElementById(
-            'status'
-          );
-
-        status.style.display =
+        document.getElementById(
+          'status'
+        ).style.display =
           'none';
 
 
@@ -547,6 +593,10 @@
         ).style.display =
           'block';
 
+
+        /*
+        GASエラー
+        */
 
         if (
           result &&
@@ -561,6 +611,10 @@
 
         }
 
+
+        /*
+        既存登録あり
+        */
 
         if (
           result &&
@@ -625,6 +679,10 @@
       };
 
 
+    /*
+    JSONPでGASへ問い合わせ
+    */
+
     const script =
       document.createElement(
         'script'
@@ -649,10 +707,12 @@
         ).style.display =
           'none';
 
+
         document.getElementById(
           'formArea'
         ).style.display =
           'block';
+
 
         showError(
           '登録情報を取得できませんでした。'
@@ -678,7 +738,7 @@
     'alumniForm'
   ).addEventListener(
     'submit',
-    async function(event) {
+    function(event) {
 
       event.preventDefault();
 
@@ -690,6 +750,10 @@
           'submitButton'
         );
 
+
+      /*
+      入力内容
+      */
 
       const data = {
 
@@ -746,7 +810,7 @@
 
 
       /*
-      必須チェック
+      必須項目
       */
 
       if (
@@ -764,8 +828,19 @@
       }
 
 
+      if (!data.idToken) {
+
+        showError(
+          'LINE認証情報を取得できませんでした。'
+        );
+
+        return;
+
+      }
+
+
       /*
-      保存開始
+      送信中表示
       */
 
       button.disabled =
@@ -775,58 +850,114 @@
         '保存しています…';
 
 
+      /*
+      ======================================
+      fetchではなく
+      HTMLフォームPOSTでGASへ送る
+      ======================================
+      */
+
       try {
 
+        const postForm =
+          document.createElement(
+            'form'
+          );
+
+
+        postForm.method =
+          'POST';
+
+
+        postForm.action =
+          GAS_URL;
+
+
+        postForm.target =
+          'gasHiddenFrame';
+
+
+        postForm.style.display =
+          'none';
+
+
         /*
-        GASへフォーム形式で送信
+        hidden input生成
         */
-
-        const params =
-          new URLSearchParams();
-
 
         Object.keys(data).forEach(
           function(key) {
 
-            params.append(
-              key,
-              data[key] || ''
+            const input =
+              document.createElement(
+                'input'
+              );
+
+
+            input.type =
+              'hidden';
+
+
+            input.name =
+              key;
+
+
+            input.value =
+              data[key] || '';
+
+
+            postForm.appendChild(
+              input
             );
 
           }
         );
 
 
-        await fetch(
-          GAS_URL,
-          {
+        /*
+        bodyへ追加
+        */
 
-            method:
-              'POST',
-
-            mode:
-              'no-cors',
-
-            body:
-              params
-
-          }
+        document.body.appendChild(
+          postForm
         );
 
 
         /*
-        送信完了
+        GASへPOST
         */
 
-        button.disabled =
-          false;
-
-        button.textContent =
-          '登録情報を更新する';
+        postForm.submit();
 
 
-        showSuccess(
-          '登録情報を送信しました。'
+        /*
+        数秒待って表示変更
+        */
+
+        setTimeout(
+          function() {
+
+            button.disabled =
+              false;
+
+
+            button.textContent =
+              '登録情報を更新する';
+
+
+            showSuccess(
+              '登録情報を送信しました。'
+            );
+
+
+            /*
+            一時フォーム削除
+            */
+
+            postForm.remove();
+
+          },
+          1500
         );
 
 
@@ -838,13 +969,14 @@
         button.disabled =
           false;
 
+
         button.textContent =
           '登録する';
 
 
         showError(
-          '保存に失敗しました。\n' +
-          '時間をおいて、もう一度お試しください。'
+          '送信に失敗しました。\n' +
+          error.message
         );
 
       }
@@ -866,11 +998,19 @@
         'errorBox'
       );
 
+
     box.textContent =
       message;
 
+
     box.style.display =
       'block';
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
 
   }
 
@@ -888,8 +1028,10 @@
         'successBox'
       );
 
+
     box.textContent =
       message;
+
 
     box.style.display =
       'block';
@@ -905,7 +1047,7 @@
 
   /*
   ==========================================
-  メッセージ非表示
+  表示リセット
   ==========================================
   */
 
