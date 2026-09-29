@@ -1,11 +1,923 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
+
 <head>
   <meta charset="UTF-8">
-  <title>CFA卒業生管理</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>CFA卒業生情報登録</title>
+
+  <!-- LINE LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f6f7;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Helvetica Neue",
+        "Yu Gothic",
+        YuGothic,
+        Arial,
+        sans-serif;
+      color: #222;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 24px 20px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+    }
+
+    h1 {
+      font-size: 25px;
+      margin: 0 0 10px;
+    }
+
+    .description {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    #status {
+      text-align: center;
+      padding: 25px 10px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    #formArea {
+      display: none;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      margin-bottom: 25px;
+      background: #f5f6f7;
+      border-radius: 12px;
+    }
+
+    #profileImage {
+      display: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .profile-caption {
+      color: #777;
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+
+    #profileName {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .field {
+      margin-bottom: 21px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .required {
+      color: #d93025;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 13px;
+      font-size: 16px;
+      border: 1px solid #d6d6d6;
+      border-radius: 10px;
+      background: white;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #777;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .help {
+      margin-top: 6px;
+      color: #888;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      background: #06c755;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
+    .error {
+      display: none;
+      margin-bottom: 18px;
+      padding: 13px;
+      border-radius: 10px;
+      background: #fff0f0;
+      color: #c62828;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .success {
+      display: none;
+      margin-bottom: 18px;
+      padding: 13px;
+      border-radius: 10px;
+      background: #e9f7ee;
+      color: #137333;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+  </style>
 </head>
+
+
 <body>
-  <h1>CFA卒業生管理フォーム</h1>
-  <p>接続テスト</p>
+
+<div class="container">
+
+  <div class="card">
+
+    <h1>CFA卒業生情報登録</h1>
+
+    <div class="description">
+      CFA学生チーム卒業生向けの登録フォームです。<br>
+      一度登録した後も、同じLINEアカウントから情報を更新できます。
+    </div>
+
+
+    <div id="status">
+      LINEとの接続を確認しています…
+    </div>
+
+
+    <div
+      id="errorBox"
+      class="error"
+    ></div>
+
+
+    <div
+      id="successBox"
+      class="success"
+    ></div>
+
+
+    <div id="formArea">
+
+
+      <div class="profile">
+
+        <img id="profileImage">
+
+        <div>
+
+          <div class="profile-caption">
+            LINEアカウント
+          </div>
+
+          <div id="profileName">
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <form id="alumniForm">
+
+
+        <div class="field">
+
+          <label>
+            氏名
+            <span class="required">必須</span>
+          </label>
+
+          <input
+            id="name"
+            type="text"
+            required
+            placeholder="例：山田 太郎"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            ふりがな
+            <span class="required">必須</span>
+          </label>
+
+          <input
+            id="kana"
+            type="text"
+            required
+            placeholder="例：やまだ たろう"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            卒業年度
+            <span class="required">必須</span>
+          </label>
+
+          <input
+            id="graduationYear"
+            type="text"
+            required
+            placeholder="例：2025年度"
+          >
+
+          <div class="help">
+            CFA学生チームを卒業した年度を入力してください。
+          </div>
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            卒業時所属・役職
+          </label>
+
+          <input
+            id="formerRole"
+            type="text"
+            placeholder="例：学生代表、irodoriリーダー"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            現在の所属
+          </label>
+
+          <input
+            id="currentAffiliation"
+            type="text"
+            placeholder="例：株式会社○○、○○大学"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            メールアドレス
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            placeholder="example@example.com"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            電話番号
+          </label>
+
+          <input
+            id="phone"
+            type="tel"
+            placeholder="09012345678"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            備考
+          </label>
+
+          <textarea
+            id="note"
+            placeholder="その他、共有しておきたいことがあれば入力してください。"
+          ></textarea>
+
+        </div>
+
+
+        <button
+          id="submitButton"
+          type="submit"
+        >
+          登録する
+        </button>
+
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  /*
+  =========================================
+  設定
+  =========================================
+  */
+
+  const LIFF_ID =
+    '2011779094-DppdVSMM';
+
+  const GAS_URL =
+    'https://script.google.com/macros/s/AKfycbx2zYHf9jkp6SJp-Gj6BLvW_qOpHdloncYF7eSrcYNqrTxvSHYM-4IXbyaDOoS9DOLV/exec';
+
+
+  /*
+  =========================================
+  LINE情報
+  =========================================
+  */
+
+  let lineUserId = '';
+
+  let lineDisplayName = '';
+
+  let linePictureUrl = '';
+
+  let idToken = '';
+
+
+  /*
+  =========================================
+  起動
+  =========================================
+  */
+
+  window.addEventListener(
+    'load',
+    initializeLiff
+  );
+
+
+  async function initializeLiff() {
+
+    try {
+
+      /*
+      LIFF初期化
+      */
+
+      await liff.init({
+        liffId: LIFF_ID,
+        withLoginOnExternalBrowser: true
+      });
+
+
+      /*
+      外部ブラウザで
+      まだログインしていない場合
+      */
+
+      if (!liff.isLoggedIn()) {
+
+        document.getElementById(
+          'status'
+        ).textContent =
+          'LINEログインを開始しています…';
+
+        liff.login();
+
+        return;
+
+      }
+
+
+      /*
+      LINEプロフィール取得
+      */
+
+      const profile =
+        await liff.getProfile();
+
+
+      lineUserId =
+        profile.userId || '';
+
+      lineDisplayName =
+        profile.displayName || '';
+
+      linePictureUrl =
+        profile.pictureUrl || '';
+
+
+      /*
+      IDトークン取得
+      */
+
+      idToken =
+        liff.getIDToken() || '';
+
+
+      /*
+      画面へ表示
+      */
+
+      document.getElementById(
+        'profileName'
+      ).textContent =
+        lineDisplayName;
+
+
+      if (linePictureUrl) {
+
+        const img =
+          document.getElementById(
+            'profileImage'
+          );
+
+        img.src =
+          linePictureUrl;
+
+        img.style.display =
+          'block';
+
+      }
+
+
+      document.getElementById(
+        'status'
+      ).textContent =
+        '登録情報を確認しています…';
+
+
+      /*
+      登録済み情報取得
+      */
+
+      loadExistingData();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      document.getElementById(
+        'status'
+      ).style.display =
+        'none';
+
+      showError(
+        'LINEとの接続に失敗しました。\n\n' +
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /*
+  =========================================
+  既存情報を取得
+  =========================================
+  */
+
+  function loadExistingData() {
+
+    /*
+    次のCode.gsで
+    JSONP方式に対応させます。
+    */
+
+    window.receiveAlumniData =
+      function(result) {
+
+        const status =
+          document.getElementById(
+            'status'
+          );
+
+        status.style.display =
+          'none';
+
+
+        document.getElementById(
+          'formArea'
+        ).style.display =
+          'block';
+
+
+        if (
+          result &&
+          result.exists
+        ) {
+
+          document.getElementById(
+            'name'
+          ).value =
+            result.name || '';
+
+
+          document.getElementById(
+            'kana'
+          ).value =
+            result.kana || '';
+
+
+          document.getElementById(
+            'graduationYear'
+          ).value =
+            result.graduationYear || '';
+
+
+          document.getElementById(
+            'formerRole'
+          ).value =
+            result.formerRole || '';
+
+
+          document.getElementById(
+            'currentAffiliation'
+          ).value =
+            result.currentAffiliation || '';
+
+
+          document.getElementById(
+            'email'
+          ).value =
+            result.email || '';
+
+
+          document.getElementById(
+            'phone'
+          ).value =
+            result.phone || '';
+
+
+          document.getElementById(
+            'note'
+          ).value =
+            result.note || '';
+
+
+          document.getElementById(
+            'submitButton'
+          ).textContent =
+            '登録情報を更新する';
+
+        }
+
+      };
+
+
+    const script =
+      document.createElement(
+        'script'
+      );
+
+
+    script.src =
+      GAS_URL +
+      '?action=get' +
+      '&lineUserId=' +
+      encodeURIComponent(
+        lineUserId
+      ) +
+      '&callback=receiveAlumniData' +
+      '&t=' +
+      Date.now();
+
+
+    script.onerror =
+      function() {
+
+        document.getElementById(
+          'status'
+        ).style.display =
+          'none';
+
+        document.getElementById(
+          'formArea'
+        ).style.display =
+          'block';
+
+        showError(
+          '登録済み情報を取得できませんでした。'
+        );
+
+      };
+
+
+    document.body.appendChild(
+      script
+    );
+
+  }
+
+
+  /*
+  =========================================
+  保存
+  =========================================
+  */
+
+  document.getElementById(
+    'alumniForm'
+  ).addEventListener(
+    'submit',
+    async function(event) {
+
+      event.preventDefault();
+
+      hideMessages();
+
+
+      const button =
+        document.getElementById(
+          'submitButton'
+        );
+
+
+      const data = {
+
+        action: 'save',
+
+        idToken:
+          idToken,
+
+        lineUserId:
+          lineUserId,
+
+        lineDisplayName:
+          lineDisplayName,
+
+        name:
+          document.getElementById(
+            'name'
+          ).value.trim(),
+
+        kana:
+          document.getElementById(
+            'kana'
+          ).value.trim(),
+
+        graduationYear:
+          document.getElementById(
+            'graduationYear'
+          ).value.trim(),
+
+        formerRole:
+          document.getElementById(
+            'formerRole'
+          ).value.trim(),
+
+        currentAffiliation:
+          document.getElementById(
+            'currentAffiliation'
+          ).value.trim(),
+
+        email:
+          document.getElementById(
+            'email'
+          ).value.trim(),
+
+        phone:
+          document.getElementById(
+            'phone'
+          ).value.trim(),
+
+        note:
+          document.getElementById(
+            'note'
+          ).value.trim()
+
+      };
+
+
+      /*
+      必須項目確認
+      */
+
+      if (
+        !data.name ||
+        !data.kana ||
+        !data.graduationYear
+      ) {
+
+        showError(
+          '氏名・ふりがな・卒業年度を入力してください。'
+        );
+
+        return;
+
+      }
+
+
+      /*
+      保存開始
+      */
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        '保存しています…';
+
+
+      try {
+
+        /*
+        GASへ送信
+
+        GitHub PagesとGASは
+        ドメインが異なるため
+        no-corsで送信します。
+        */
+
+        await fetch(
+          GAS_URL,
+          {
+            method: 'POST',
+
+            mode: 'no-cors',
+
+            headers: {
+              'Content-Type':
+                'text/plain;charset=utf-8'
+            },
+
+            body:
+              JSON.stringify(data)
+          }
+        );
+
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          '登録情報を更新する';
+
+
+        showSuccess(
+          '登録情報を保存しました。'
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          '登録する';
+
+
+        showError(
+          '保存に失敗しました。\n' +
+          'もう一度お試しください。'
+        );
+
+      }
+
+    }
+  );
+
+
+  /*
+  =========================================
+  表示処理
+  =========================================
+  */
+
+  function showError(message) {
+
+    const box =
+      document.getElementById(
+        'errorBox'
+      );
+
+    box.textContent =
+      message;
+
+    box.style.display =
+      'block';
+
+  }
+
+
+  function showSuccess(message) {
+
+    const box =
+      document.getElementById(
+        'successBox'
+      );
+
+    box.textContent =
+      message;
+
+    box.style.display =
+      'block';
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+  }
+
+
+  function hideMessages() {
+
+    document.getElementById(
+      'errorBox'
+    ).style.display =
+      'none';
+
+
+    document.getElementById(
+      'successBox'
+    ).style.display =
+      'none';
+
+  }
+
+</script>
+
 </body>
 </html>
