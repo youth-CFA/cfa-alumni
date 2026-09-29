@@ -11,7 +11,6 @@
 
   <title>CFA卒業生情報登録</title>
 
-  <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
@@ -150,7 +149,7 @@
       border: none;
       border-radius: 12px;
       background: #06c755;
-      color: white;
+      color: #ffffff;
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
@@ -220,7 +219,6 @@
 
 
     <div id="formArea">
-
 
       <div class="profile">
 
@@ -381,7 +379,6 @@
           登録する
         </button>
 
-
       </form>
 
     </div>
@@ -392,8 +389,7 @@
 
 
 <!--
-GASへのPOST送信用
-画面遷移を発生させないための隠しiframe
+GASへPOSTするための隠しiframe
 -->
 <iframe
   name="gasHiddenFrame"
@@ -424,11 +420,11 @@ GASへのPOST送信用
   ==========================================
   */
 
+  let lineUserId = '';
+
   let lineDisplayName = '';
 
   let linePictureUrl = '';
-
-  let idToken = '';
 
 
   /*
@@ -458,7 +454,7 @@ GASへのPOST送信用
 
 
       /*
-      未ログインの場合
+      LINEログイン確認
       */
 
       if (!liff.isLoggedIn()) {
@@ -467,6 +463,7 @@ GASへのPOST送信用
           'status'
         ).textContent =
           'LINEログインを開始しています…';
+
 
         liff.login();
 
@@ -483,32 +480,33 @@ GASへのPOST送信用
         await liff.getProfile();
 
 
+      lineUserId =
+        profile.userId || '';
+
+
       lineDisplayName =
         profile.displayName || '';
+
 
       linePictureUrl =
         profile.pictureUrl || '';
 
 
       /*
-      IDトークン取得
+      User ID取得確認
       */
 
-      idToken =
-        liff.getIDToken() || '';
-
-
-      if (!idToken) {
+      if (!lineUserId) {
 
         throw new Error(
-          'LINE認証情報を取得できませんでした。'
+          'LINEユーザーIDを取得できませんでした。'
         );
 
       }
 
 
       /*
-      LINE名表示
+      LINE表示名
       */
 
       document.getElementById(
@@ -518,7 +516,7 @@ GASへのPOST送信用
 
 
       /*
-      LINE画像表示
+      LINEプロフィール画像
       */
 
       if (linePictureUrl) {
@@ -528,8 +526,10 @@ GASへのPOST送信用
             'profileImage'
           );
 
+
         image.src =
           linePictureUrl;
+
 
         image.style.display =
           'block';
@@ -538,7 +538,7 @@ GASへのPOST送信用
 
 
       /*
-      既存情報読み込み
+      登録済み情報確認
       */
 
       document.getElementById(
@@ -595,7 +595,7 @@ GASへのPOST送信用
 
 
         /*
-        GASエラー
+        エラー
         */
 
         if (
@@ -680,7 +680,7 @@ GASへのPOST送信用
 
 
     /*
-    JSONPでGASへ問い合わせ
+    GASへJSONPで問い合わせ
     */
 
     const script =
@@ -692,8 +692,10 @@ GASへのPOST送信用
     script.src =
       GAS_URL +
       '?action=get' +
-      '&idToken=' +
-      encodeURIComponent(idToken) +
+      '&lineUserId=' +
+      encodeURIComponent(
+        lineUserId
+      ) +
       '&callback=receiveAlumniData' +
       '&t=' +
       Date.now();
@@ -742,6 +744,7 @@ GASへのPOST送信用
 
       event.preventDefault();
 
+
       hideMessages();
 
 
@@ -752,7 +755,7 @@ GASへのPOST送信用
 
 
       /*
-      入力内容
+      入力データ
       */
 
       const data = {
@@ -760,8 +763,8 @@ GASへのPOST送信用
         action:
           'save',
 
-        idToken:
-          idToken,
+        lineUserId:
+          lineUserId,
 
         lineDisplayName:
           lineDisplayName,
@@ -828,10 +831,14 @@ GASへのPOST送信用
       }
 
 
-      if (!data.idToken) {
+      /*
+      LINE User ID確認
+      */
+
+      if (!data.lineUserId) {
 
         showError(
-          'LINE認証情報を取得できませんでした。'
+          'LINEユーザーIDを取得できませんでした。'
         );
 
         return;
@@ -840,24 +847,24 @@ GASへのPOST送信用
 
 
       /*
-      送信中表示
+      ボタン変更
       */
 
       button.disabled =
         true;
 
+
       button.textContent =
         '保存しています…';
 
 
-      /*
-      ======================================
-      fetchではなく
-      HTMLフォームPOSTでGASへ送る
-      ======================================
-      */
-
       try {
+
+        /*
+        ======================================
+        HTMLフォームPOST
+        ======================================
+        */
 
         const postForm =
           document.createElement(
@@ -882,7 +889,7 @@ GASへのPOST送信用
 
 
         /*
-        hidden input生成
+        hidden input作成
         */
 
         Object.keys(data).forEach(
@@ -924,14 +931,14 @@ GASへのPOST送信用
 
 
         /*
-        GASへPOST
+        GASへ送信
         */
 
         postForm.submit();
 
 
         /*
-        数秒待って表示変更
+        表示更新
         */
 
         setTimeout(
@@ -1047,7 +1054,7 @@ GASへのPOST送信用
 
   /*
   ==========================================
-  表示リセット
+  メッセージ非表示
   ==========================================
   */
 
