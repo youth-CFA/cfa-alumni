@@ -41,14 +41,14 @@
     }
 
     .card {
-      background: white;
+      background: #ffffff;
       border-radius: 18px;
       padding: 24px 20px;
-      box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
     }
 
     h1 {
-      font-size: 25px;
+      font-size: 24px;
       margin: 0 0 10px;
     }
 
@@ -56,12 +56,12 @@
       font-size: 14px;
       line-height: 1.7;
       color: #666;
-      margin-bottom: 25px;
+      margin-bottom: 24px;
     }
 
     #status {
       text-align: center;
-      padding: 25px 10px;
+      padding: 24px 10px;
       color: #666;
       font-size: 14px;
     }
@@ -75,7 +75,7 @@
       align-items: center;
       gap: 12px;
       padding: 13px;
-      margin-bottom: 25px;
+      margin-bottom: 24px;
       background: #f5f6f7;
       border-radius: 12px;
     }
@@ -95,7 +95,7 @@
     }
 
     #profileName {
-      font-weight: bold;
+      font-weight: 700;
       font-size: 14px;
     }
 
@@ -123,7 +123,7 @@
       font-size: 16px;
       border: 1px solid #d6d6d6;
       border-radius: 10px;
-      background: white;
+      background: #ffffff;
     }
 
     input:focus,
@@ -152,12 +152,12 @@
       background: #06c755;
       color: white;
       font-size: 16px;
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
     }
 
     button:disabled {
-      opacity: .5;
+      opacity: 0.5;
       cursor: default;
     }
 
@@ -186,7 +186,6 @@
 
   </style>
 </head>
-
 
 <body>
 
@@ -221,7 +220,6 @@
 
     <div id="formArea">
 
-
       <div class="profile">
 
         <img id="profileImage">
@@ -232,8 +230,7 @@
             LINEアカウント
           </div>
 
-          <div id="profileName">
-          </div>
+          <div id="profileName"></div>
 
         </div>
 
@@ -379,7 +376,6 @@
           登録する
         </button>
 
-
       </form>
 
     </div>
@@ -392,37 +388,34 @@
 <script>
 
   /*
-  =========================================
+  ==========================================
   設定
-  =========================================
+  ==========================================
   */
 
   const LIFF_ID =
     '2011779094-DppdVSMM';
 
+
   const GAS_URL =
-    'https://script.google.com/macros/s/AKfycbxtBElhBBQCMalSwvLrHUxAh0_WpCp3wk-KnvncBE4SdZyGA4RliHvZwk5Cw6Q32mVs/exec';
+    'https://script.google.com/macros/s/AKfycbxwgq77Eri84vJYSpT0TyyoX6zCBI2ms_80Deqn_P-2uzy6VbuqpCEb00fGxd2e8VQW/exec';
 
 
   /*
-  =========================================
+  ==========================================
   LINE情報
-  =========================================
+  ==========================================
   */
 
-  let lineUserId = '';
-
   let lineDisplayName = '';
-
   let linePictureUrl = '';
-
   let idToken = '';
 
 
   /*
-  =========================================
+  ==========================================
   起動
-  =========================================
+  ==========================================
   */
 
   window.addEventListener(
@@ -435,20 +428,11 @@
 
     try {
 
-      /*
-      LIFF初期化
-      */
-
       await liff.init({
         liffId: LIFF_ID,
         withLoginOnExternalBrowser: true
       });
 
-
-      /*
-      外部ブラウザで
-      まだログインしていない場合
-      */
 
       if (!liff.isLoggedIn()) {
 
@@ -464,16 +448,9 @@
       }
 
 
-      /*
-      LINEプロフィール取得
-      */
-
       const profile =
         await liff.getProfile();
 
-
-      lineUserId =
-        profile.userId || '';
 
       lineDisplayName =
         profile.displayName || '';
@@ -482,22 +459,23 @@
         profile.pictureUrl || '';
 
 
-      /*
-      IDトークン取得
-      */
-
       idToken =
         liff.getIDToken() || '';
 
 
-      /*
-      画面へ表示
-      */
+      if (!idToken) {
+
+        throw new Error(
+          'LINEの認証情報を取得できませんでした。'
+        );
+
+      }
+
 
       document.getElementById(
         'profileName'
       ).textContent =
-        lineDisplayName;
+        lineDisplayName || 'LINEユーザー';
 
 
       if (linePictureUrl) {
@@ -522,10 +500,6 @@
         '登録情報を確認しています…';
 
 
-      /*
-      登録済み情報取得
-      */
-
       loadExistingData();
 
 
@@ -549,17 +523,12 @@
 
 
   /*
-  =========================================
-  既存情報を取得
-  =========================================
+  ==========================================
+  登録済み情報取得
+  ==========================================
   */
 
   function loadExistingData() {
-
-    /*
-    次のCode.gsで
-    JSONP方式に対応させます。
-    */
 
     window.receiveAlumniData =
       function(result) {
@@ -577,6 +546,20 @@
           'formArea'
         ).style.display =
           'block';
+
+
+        if (
+          result &&
+          result.error
+        ) {
+
+          showError(
+            result.error
+          );
+
+          return;
+
+        }
 
 
         if (
@@ -651,10 +634,8 @@
     script.src =
       GAS_URL +
       '?action=get' +
-      '&lineUserId=' +
-      encodeURIComponent(
-        lineUserId
-      ) +
+      '&idToken=' +
+      encodeURIComponent(idToken) +
       '&callback=receiveAlumniData' +
       '&t=' +
       Date.now();
@@ -674,7 +655,7 @@
           'block';
 
         showError(
-          '登録済み情報を取得できませんでした。'
+          '登録情報を取得できませんでした。'
         );
 
       };
@@ -688,9 +669,9 @@
 
 
   /*
-  =========================================
-  保存
-  =========================================
+  ==========================================
+  フォーム送信
+  ==========================================
   */
 
   document.getElementById(
@@ -712,13 +693,11 @@
 
       const data = {
 
-        action: 'save',
+        action:
+          'save',
 
         idToken:
           idToken,
-
-        lineUserId:
-          lineUserId,
 
         lineDisplayName:
           lineDisplayName,
@@ -767,7 +746,7 @@
 
 
       /*
-      必須項目確認
+      必須チェック
       */
 
       if (
@@ -799,30 +778,45 @@
       try {
 
         /*
-        GASへ送信
-
-        GitHub PagesとGASは
-        ドメインが異なるため
-        no-corsで送信します。
+        GASへフォーム形式で送信
         */
+
+        const params =
+          new URLSearchParams();
+
+
+        Object.keys(data).forEach(
+          function(key) {
+
+            params.append(
+              key,
+              data[key] || ''
+            );
+
+          }
+        );
+
 
         await fetch(
           GAS_URL,
           {
-            method: 'POST',
 
-            mode: 'no-cors',
+            method:
+              'POST',
 
-            headers: {
-              'Content-Type':
-                'text/plain;charset=utf-8'
-            },
+            mode:
+              'no-cors',
 
             body:
-              JSON.stringify(data)
+              params
+
           }
         );
 
+
+        /*
+        送信完了
+        */
 
         button.disabled =
           false;
@@ -832,13 +826,14 @@
 
 
         showSuccess(
-          '登録情報を保存しました。'
+          '登録情報を送信しました。'
         );
 
 
       } catch (error) {
 
         console.error(error);
+
 
         button.disabled =
           false;
@@ -849,7 +844,7 @@
 
         showError(
           '保存に失敗しました。\n' +
-          'もう一度お試しください。'
+          '時間をおいて、もう一度お試しください。'
         );
 
       }
@@ -859,9 +854,9 @@
 
 
   /*
-  =========================================
-  表示処理
-  =========================================
+  ==========================================
+  エラー表示
+  ==========================================
   */
 
   function showError(message) {
@@ -879,6 +874,12 @@
 
   }
 
+
+  /*
+  ==========================================
+  成功表示
+  ==========================================
+  */
 
   function showSuccess(message) {
 
@@ -901,6 +902,12 @@
 
   }
 
+
+  /*
+  ==========================================
+  メッセージ非表示
+  ==========================================
+  */
 
   function hideMessages() {
 
