@@ -11,6 +11,7 @@
 
   <title>CFA卒業生情報登録</title>
 
+  <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
@@ -116,6 +117,7 @@
     }
 
     input,
+    select,
     textarea {
       width: 100%;
       padding: 13px;
@@ -123,12 +125,18 @@
       border: 1px solid #d6d6d6;
       border-radius: 10px;
       background: #ffffff;
+      color: #222;
     }
 
     input:focus,
+    select:focus,
     textarea:focus {
       outline: none;
       border-color: #777;
+    }
+
+    select {
+      cursor: pointer;
     }
 
     textarea {
@@ -243,6 +251,7 @@
       <form id="alumniForm">
 
 
+        <!-- 氏名 -->
         <div class="field">
 
           <label>
@@ -260,6 +269,7 @@
         </div>
 
 
+        <!-- ふりがな -->
         <div class="field">
 
           <label>
@@ -277,6 +287,7 @@
         </div>
 
 
+        <!-- 卒業年度 -->
         <div class="field">
 
           <label>
@@ -284,20 +295,60 @@
             <span class="required">必須</span>
           </label>
 
-          <input
+          <select
             id="graduationYear"
-            type="text"
             required
-            placeholder="例：2025年度"
           >
+            <option value="">
+              選択してください
+            </option>
+
+            <option value="2022">
+              2022年度
+            </option>
+
+            <option value="2023">
+              2023年度
+            </option>
+
+            <option value="2024">
+              2024年度
+            </option>
+
+            <option value="2025">
+              2025年度
+            </option>
+
+            <option value="2026">
+              2026年度
+            </option>
+
+            <option value="2027">
+              2027年度
+            </option>
+
+            <option value="2028">
+              2028年度
+            </option>
+
+            <option value="2029">
+              2029年度
+            </option>
+
+            <option value="2030">
+              2030年度
+            </option>
+
+          </select>
 
           <div class="help">
-            CFA学生チームを卒業した年度を入力してください。
+            CFA学生チームを卒業した年度を選択してください。
           </div>
 
         </div>
 
 
+        <!-- 卒業時所属・役職 -->
         <div class="field">
 
           <label>
@@ -313,6 +364,7 @@
         </div>
 
 
+        <!-- 現在の所属 -->
         <div class="field">
 
           <label>
@@ -328,6 +380,7 @@
         </div>
 
 
+        <!-- メールアドレス -->
         <div class="field">
 
           <label>
@@ -343,6 +396,7 @@
         </div>
 
 
+        <!-- 電話番号 -->
         <div class="field">
 
           <label>
@@ -358,6 +412,7 @@
         </div>
 
 
+        <!-- 備考 -->
         <div class="field">
 
           <label>
@@ -372,6 +427,7 @@
         </div>
 
 
+        <!-- 登録ボタン -->
         <button
           id="submitButton"
           type="submit"
@@ -621,11 +677,19 @@ GASへPOSTするための隠しiframe
           result.exists
         ) {
 
+          /*
+          氏名
+          */
+
           document.getElementById(
             'name'
           ).value =
             result.name || '';
 
+
+          /*
+          ふりがな
+          */
 
           document.getElementById(
             'kana'
@@ -633,11 +697,36 @@ GASへPOSTするための隠しiframe
             result.kana || '';
 
 
+          /*
+          卒業年度
+
+          既存データが
+          「2026年度」
+          でも
+          「2026」
+          でも対応する
+          */
+
+          const savedGraduationYear =
+            String(
+              result.graduationYear || ''
+            )
+            .replace(
+              '年度',
+              ''
+            )
+            .trim();
+
+
           document.getElementById(
             'graduationYear'
           ).value =
-            result.graduationYear || '';
+            savedGraduationYear;
 
+
+          /*
+          卒業時所属・役職
+          */
 
           document.getElementById(
             'formerRole'
@@ -645,11 +734,19 @@ GASへPOSTするための隠しiframe
             result.formerRole || '';
 
 
+          /*
+          現在の所属
+          */
+
           document.getElementById(
             'currentAffiliation'
           ).value =
             result.currentAffiliation || '';
 
+
+          /*
+          メールアドレス
+          */
 
           document.getElementById(
             'email'
@@ -657,17 +754,29 @@ GASへPOSTするための隠しiframe
             result.email || '';
 
 
+          /*
+          電話番号
+          */
+
           document.getElementById(
             'phone'
           ).value =
             result.phone || '';
 
 
+          /*
+          備考
+          */
+
           document.getElementById(
             'note'
           ).value =
             result.note || '';
 
+
+          /*
+          更新ボタン表示
+          */
 
           document.getElementById(
             'submitButton'
@@ -779,6 +888,11 @@ GASへPOSTするための隠しiframe
             'kana'
           ).value.trim(),
 
+        /*
+        selectのvalueは
+        2022〜2030の数字のみ
+        */
+
         graduationYear:
           document.getElementById(
             'graduationYear'
@@ -824,6 +938,38 @@ GASへPOSTするための隠しiframe
 
         showError(
           '氏名・ふりがな・卒業年度を入力してください。'
+        );
+
+        return;
+
+      }
+
+
+      /*
+      卒業年度の値チェック
+      */
+
+      const allowedGraduationYears = [
+        '2022',
+        '2023',
+        '2024',
+        '2025',
+        '2026',
+        '2027',
+        '2028',
+        '2029',
+        '2030'
+      ];
+
+
+      if (
+        !allowedGraduationYears.includes(
+          data.graduationYear
+        )
+      ) {
+
+        showError(
+          '卒業年度を正しく選択してください。'
         );
 
         return;
